@@ -9,11 +9,19 @@
 import UIKit
 import MapKit
 import CoreLocation
+import CoreData
 
 class ViewController: UIViewController {
     @IBOutlet weak var mapView: MKMapView!
     var locationManager = CLLocationManager()
 
+    @IBOutlet weak var nameText: UITextField!
+    @IBOutlet weak var commentText: UITextField!
+    
+    var choosenLatitude = Double()
+    var choosenLongitude = Double()
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         mapView.delegate = self
@@ -35,19 +43,44 @@ class ViewController: UIViewController {
             
             let touchedCoordinates = self.mapView.convert(touchedPoint, toCoordinateFrom: self.mapView)
             
+            choosenLatitude = touchedCoordinates.latitude
+            choosenLongitude = touchedCoordinates.longitude
+            
             let annotation = MKPointAnnotation()
             
             annotation.coordinate = touchedCoordinates
             
-            annotation.title = "new annotation"
+            annotation.title = nameText.text
             
-            annotation.subtitle = "travel book"
+            annotation.subtitle = commentText.text
             
             self.mapView.addAnnotation(annotation)
         }
     }
 
 
+    @IBAction func saveButtonClicked(_ sender: Any) {
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        
+        let newPlace = NSEntityDescription.insertNewObject(forEntityName: "Places", into: context)
+        
+        newPlace.setValue(nameText.text, forKey: "title")
+        newPlace.setValue(commentText.text, forKey: "subtitle")
+        
+        newPlace.setValue(choosenLatitude, forKey: "latitude")
+        newPlace.setValue(choosenLongitude, forKey: "longitude")
+        newPlace.setValue(UUID(), forKey: "id")
+        
+        do{
+            try context.save()
+            print("success")
+        }catch{
+            print("error")
+        }
+        
+        
+    }
 }
 
 extension ViewController: MKMapViewDelegate{
