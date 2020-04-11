@@ -202,4 +202,24 @@ extension ViewController: CLLocationManagerDelegate{
         
         return pinView
     }
+    
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        if selectedTitle != ""{
+            let requesLocation = CLLocation(latitude: annotatioLatitude, longitude: annotationLongitude)
+            
+            CLGeocoder().reverseGeocodeLocation(requesLocation) { (placemarks, errors) in
+                //closure
+                if let placemarks = placemarks {
+                    if placemarks.count > 0 {
+                        let newPlacemark = MKPlacemark(placemark: placemarks[0])
+                        let item = MKMapItem(placemark: newPlacemark)
+                        item.name = self.annotationTitle
+                        let lauchOptions = [MKLaunchOptionsDirectionsModeKey:MKLaunchOptionsDirectionsModeDriving]
+                        item.openInMaps(launchOptions: lauchOptions)
+                    }
+                }
+                
+            }
+        }
+    }
 }
