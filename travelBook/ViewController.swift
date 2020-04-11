@@ -14,7 +14,7 @@ import CoreData
 class ViewController: UIViewController {
     @IBOutlet weak var mapView: MKMapView!
     var locationManager = CLLocationManager()
-
+    
     @IBOutlet weak var nameText: UITextField!
     @IBOutlet weak var commentText: UITextField!
     
@@ -23,6 +23,12 @@ class ViewController: UIViewController {
     
     var selectedTitle = ""
     var selectedTitleID: UUID?
+    
+    var annotationTitle = ""
+    var annotationSubtitle = ""
+    
+    var annotatioLatitude = Double()
+    var annotationLongitude = Double()
     
     
     override func viewDidLoad() {
@@ -42,7 +48,58 @@ class ViewController: UIViewController {
         if selectedTitle != "" {
             //core data
             let stringUUID = selectedTitleID!.uuidString
-            print(stringUUID)
+            
+            let appDelegate = UIApplication.shared.delegate as! AppDelegate
+            
+            let context = appDelegate.persistentContainer.viewContext
+            
+            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Places")
+            
+            fetchRequest.predicate = NSPredicate(format: "id = %@", stringUUID)
+            
+            fetchRequest.returnsObjectsAsFaults = false
+            do {
+                let results = try context.fetch(fetchRequest)
+                
+                if results.count > 0{
+                    for result in results as! [NSManagedObject] {
+                        if let title = result.value(forKey: "title") as? String {
+                            annotationTitle = title
+                        }
+                        
+                        if let subtitle = result.value(forKey: "subtitle") as? String {
+                            annotationSubtitle = subtitle
+                        }
+                        
+                        if let longitude = result.value(forKey: "longitude") as? Double {
+                            annotationLongitude = longitude
+                        }
+                        
+                        if let latitude = result.value(forKey: "latitude") as? Double {
+                            annotatioLatitude = latitude
+                            let annotation = MKPointAnnotation()
+                            annotation.title = annotationTitle
+                            annotation.subtitle = annotationSubtitle
+                            
+                            let coordinate = CLLocationCoordinate2D(latitude: annotatioLatitude, longitude: annotationLongitude)
+                            
+                            annotation.coordinate = coordinate
+                            
+                            mapView.addAnnotation(annotation)
+                            
+                            nameText.text = annotationTitle
+                            
+                            commentText.text = annotationSubtitle
+                            
+                        }
+                    }
+                }
+            }catch{
+                
+            }
+            
+            
+            
         }else {
             //add new data
         }
@@ -68,8 +125,8 @@ class ViewController: UIViewController {
             self.mapView.addAnnotation(annotation)
         }
     }
-
-
+    
+    
     @IBAction func saveButtonClicked(_ sender: Any) {
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
         let context = appDelegate.persistentContainer.viewContext
